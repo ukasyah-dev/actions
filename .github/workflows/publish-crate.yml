@@ -1,10 +1,10 @@
-name: Publish Cargo package
+name: Publish crate
 
 on:
   workflow_call:
 
 jobs:
-  publish:
+  crate:
     runs-on: ubuntu-24.04
 
     steps:
