@@ -1,0 +1,24 @@
+name: Publish Cargo package
+
+on:
+  workflow_call:
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Login to crates.io
+        run: cargo login ${{ secrets.CRATES_IO_TOKEN }}
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Publish to crates.io
+        run: cargo publish
