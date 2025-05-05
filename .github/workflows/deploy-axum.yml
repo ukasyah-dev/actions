@@ -63,6 +63,7 @@ jobs:
   #   steps:
   #     - name: Deploy
   #       uses: fjogeleit/http-request-action@v1
+  #       if: github.event.repository.name != 'deploy'
   #       with:
   #         url: https://deploy.ukasyah.dev
   #         method: POST
