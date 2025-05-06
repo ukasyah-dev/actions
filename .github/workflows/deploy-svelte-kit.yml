@@ -58,20 +58,20 @@ jobs:
         run: |
           if [[ "${{ inputs.adapter }}" == "node" ]]; then
             cat <<EOT > Dockerfile
-            FROM gcr.io/distroless/nodejs22-debian12
-            WORKDIR /runtime
-            COPY build package.json .
-            EXPOSE 3000
-            CMD ["index.js"]
-            EOT
+          FROM gcr.io/distroless/nodejs22-debian12
+          WORKDIR /runtime
+          COPY build package.json .
+          EXPOSE 3000
+          CMD ["index.js"]
+          EOT
           elif [[ "${{ inputs.adapter }}" == "static" ]]; then
-            cat <<EOT > Dockerfile
-            FROM busybox:1.37.0
-            WORKDIR /runtime
-            COPY build .
-            EXPOSE 3000
-            CMD ["busybox", "httpd", "-f", "-p", "3000"]
-            EOT
+          cat <<EOT > Dockerfile
+          FROM busybox:1.37.0
+          WORKDIR /runtime
+          COPY build .
+          EXPOSE 3000
+          CMD ["busybox", "httpd", "-f", "-p", "3000"]
+          EOT
           else
             echo "Unknown adapter: ${{ inputs.adapter }}"
             exit 1
