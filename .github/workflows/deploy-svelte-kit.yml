@@ -85,17 +85,16 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  # deploy:
-  #   runs-on: ubuntu-24.04
-  #   needs: build
-  #   timeout-minutes: 10
+  deploy:
+    runs-on: ubuntu-24.04
+    needs: build
+    timeout-minutes: 10
       
-  #   steps:
-  #     - name: Deploy
-  #       uses: fjogeleit/http-request-action@v1
-  #       with:
-  #         url: https://deploy.ukasyah.dev
-  #         method: POST
-  #         customHeaders: '{"Content-Type": "application/json", "X-Token": "OyYNafD4696iF"}'
-  #         data: '{"name": "${{ github.event.repository.name }}"}'
-
+    steps:
+      - name: Deploy
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: https://deploy.ukasyah.dev
+          method: POST
+          customHeaders: '{"Content-Type": "application/json", "X-Token": "OyYNafD4696iF"}'
+          data: '{"name": "${{ github.event.repository.name }}"}'
