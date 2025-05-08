@@ -1,0 +1,50 @@
+name: Check updates
+
+on:
+  workflow_call:
+
+jobs:
+  updates:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: de-vri-es/setup-git-credentials@v2
+        with:
+          credentials: ${{ secrets.GIT_CREDENTIALS }}
+
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install cargo-edit
+        run: cargo install cargo-edit
+
+      - name: Upgrade dependencies to latest
+        run: cargo upgrade --incompatible
+
+      - name: Check for updates
+        id: checker
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set TIMESTAMP
+        if: steps.checker.outputs.has_updates == 'true'
+        run: echo "TIMESTAMP=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Create a pull request
+        if: steps.checker.outputs.has_updates == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: update dependencies"
+          title: "chore: update dependencies"
+          body: "Update dependencies to the latest version."
+          branch: "chore/update-dependencies-${{ env.TIMESTAMP }}"
+          assignees: ukasyah-dev
