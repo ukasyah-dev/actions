@@ -15,6 +15,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - uses: de-vri-es/setup-git-credentials@v2
+        with:
+          credentials: ${{ secrets.GIT_CREDENTIALS }}
+
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
