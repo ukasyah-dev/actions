@@ -67,5 +67,5 @@ jobs:
         with:
           url: https://deploy.ukasyah.dev
           method: POST
-          customHeaders: '{"Content-Type": "application/json", "X-Token": "{{ secrets.DEPLOY_TOKEN }}"}'
+          customHeaders: '{"Content-Type": "application/json", "X-Token": "${{ secrets.DEPLOY_TOKEN }}"}'
           data: '{"name": "${{ github.event.repository.name }}"}'
