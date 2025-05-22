@@ -1,0 +1,51 @@
+name: Check pnpm updates
+
+on:
+  workflow_call:
+
+jobs:
+  updates:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Upgrade dependencies to latest
+        run: pnpm up --latest
+
+      - name: Check for updates
+        id: checker
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create a pull request
+        if: steps.checker.outputs.has_updates == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: update dependencies"
+          title: "chore: update dependencies"
+          body: "Update dependencies to the latest version."
+          branch: "chore/update-dependencies-${{ github.run_id }}"
+          assignees: ukasyah-dev
