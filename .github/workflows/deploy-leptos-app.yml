@@ -1,0 +1,97 @@
+name: Deploy Leptos app
+
+on:
+  workflow_call:
+    inputs:
+      csr:
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install trunk
+        if: inputs.csr
+        run: cargo install trunk
+
+      - name: Build
+        run: |
+          if [ "${{ inputs.csr }}" = "true" ]; then
+            trunk build --release
+          else
+            cargo build --release
+          fi
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Create Dockerfile
+        run: |
+          if [ "${{ inputs.csr }}" = "true" ]; then
+
+            cat <<EOT > Dockerfile
+          FROM busybox:1.37.0
+          WORKDIR /runtime
+          COPY dist .
+          EXPOSE 3000
+          CMD ["busybox", "httpd", "-f", "-p", "3000"]
+          EOT
+
+          else
+
+            cat <<EOT > Dockerfile
+          FROM ubuntu:noble-20250404
+          WORKDIR /runtime
+          COPY target/release/${{ github.event.repository.name }} ./app
+          EXPOSE 3000
+          CMD ["./app"]
+          EOT
+
+          fi
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    runs-on: ubuntu-24.04
+    needs: build
+    timeout-minutes: 10
+
+    steps:
+      - name: Deploy
+        uses: fjogeleit/http-request-action@v1
+        if: github.event.repository.name != 'deploy'
+        with:
+          url: https://deploy.ukasyah.dev
+          method: POST
+          customHeaders: '{"Content-Type": "application/json", "X-Token": "${{ secrets.DEPLOY_TOKEN }}"}'
+          data: '{"name": "${{ github.event.repository.name }}"}'
