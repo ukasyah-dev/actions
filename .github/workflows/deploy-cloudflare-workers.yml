@@ -1,0 +1,48 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: false
+        type: string
+
+jobs:
+  cloudflare-workers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          CLOUDFLARE_ENV: ${{ inputs.environment }}
+
+      - name: Deploy
+        run: |
+          if [ -n "${{ inputs.environment }}" ]; then
+            pnpm wrangler deploy --env ${{ inputs.environment }}
+          else
+            pnpm wrangler deploy
+          fi
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
